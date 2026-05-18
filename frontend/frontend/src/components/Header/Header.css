@@ -1,0 +1,96 @@
+.header {
+  position: relative;
+  min-height: 520px;
+  margin: 30px auto;
+  border-radius: 24px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 24px 60px rgba(7, 28, 20, 0.22);
+}
+
+.header-contents {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 18px;
+  max-width: 560px;
+  padding: 56px 0 56px 70px;
+  color: white;
+  z-index: 2;
+  animation: fadeIn 1.2s;
+}
+
+.header-tagline {
+  font-size: 14px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9ce6b1;
+  font-weight: 700;
+}
+
+.header-contents h2 {
+  font-weight: 800;
+  color: white;
+  font-size: clamp(34px, 5vw, 64px);
+  line-height: 1.04;
+}
+
+.header-contents p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.7;
+}
+
+.header-contents button {
+  border: none;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #22c55e, #123f2a);
+  font-size: 15px;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.28);
+}
+
+.header-stat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-stat-chips span {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(156, 230, 177, 0.28);
+  backdrop-filter: blur(8px);
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .header {
+    min-height: 460px;
+  }
+
+  .header-contents {
+    padding: 36px 24px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    min-height: 420px;
+    margin: 24px auto;
+  }
+
+  .header-contents h2 {
+    font-size: 34px;
+  }
+}

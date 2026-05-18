@@ -1,0 +1,21 @@
+import React, { useState } from 'react'
+import './Home.css'
+import Header from '../../components/Header/Header'
+import ExploreMenu from '../../components/ExploreMenu/ExploreMenu'
+import FoodDisplay from '../../components/FoodDisplay/FoodDisplay'
+
+// Home combines hero, category filter, and product grid.
+const Home = () => {
+// Selected category is passed to both ExploreMenu and FoodDisplay.
+const [category,setCategory] = useState("all")
+
+  return (
+    <div>
+      <Header/>
+      <ExploreMenu category={category} setCategory={setCategory}/>
+      <FoodDisplay category={category}/>
+      </div>
+  )
+}
+
+export default Home

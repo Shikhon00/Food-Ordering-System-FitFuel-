@@ -1,0 +1,111 @@
+.login-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    width: 100vw;
+    min-height: 100vh;
+    background-color: #00000090;
+    display: grid;
+    padding: 18px;
+    overflow-y: auto;
+}
+
+.login-popup-container {
+    place-self: center;
+    width: min(92vw, 420px);
+    color: #808080;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 25px 30px;
+    border-radius: 8px;
+    border: 1px solid #d7eadb;
+    box-shadow: 0 24px 60px rgba(7, 28, 20, 0.18);
+    font-size: 14px;
+    animation: fadeIn 0.5s;
+}
+
+.login-popup-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: black;
+}
+
+.login-popup-title img {
+    width: 16px;
+    cursor: pointer;
+    
+}
+
+.login-popup-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.login-popup-inputs input,
+.login-popup-inputs select {
+    outline: none;
+    border: 1px solid #cfe3d3;
+    padding: 12px;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.login-popup-container button {
+    border: none;
+    padding: 12px;
+    border-radius: 999px;
+    color: white;
+    background: linear-gradient(135deg, #22c55e, #123f2a);
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.login-popup-condition {
+    display: flex;
+    align-items: start;
+    gap: 8px;
+    margin-top: -15px;
+}
+
+.login-popup-condition input {
+    margin-top: 5px;
+}
+
+.login-popup p span {
+    color: #16a34a;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.login-role-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.login-role-tabs button {
+    border: 1px solid #cfe3d3;
+    border-radius: 8px;
+    background: #f6fff8;
+    color: #123f2a;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 10px 8px;
+}
+
+.login-role-tabs button.active {
+    border-color: transparent;
+    background: #123f2a;
+    color: #ffffff;
+}
+
+@media (max-width: 420px) {
+    .login-role-tabs {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,24 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.app-notification {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 1001;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 13px 16px;
+  border-radius: 8px;
+  background: #123f2a;
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.app-notification.error {
+  background: #991b1b;
+}

@@ -1,0 +1,270 @@
+.delivery-panel {
+    min-height: 100vh;
+    margin: 0;
+    padding: 28px 32px 40px;
+    background: #f6f8fb;
+}
+
+.auth-panel {
+    display: grid;
+    place-items: center;
+}
+
+.delivery-auth-card {
+    width: min(92vw, 440px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border: 1px solid #d7eadb;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 24px;
+}
+
+.delivery-auth-card h2,
+.delivery-panel-header h2 {
+    color: #123f2a;
+}
+
+.delivery-auth-card p,
+.delivery-panel-header p,
+.delivery-task-card p {
+    color: #64748b;
+}
+
+.delivery-auth-card input,
+.delivery-auth-card select,
+.delivery-task-card input,
+.delivery-status-control select {
+    width: 100%;
+    border: 1px solid #cfe3d3;
+    border-radius: 8px;
+    outline-color: #22c55e;
+    padding: 11px 12px;
+}
+
+.delivery-auth-card button,
+.delivery-header-actions button,
+.delivery-task-card button {
+    border: none;
+    border-radius: 8px;
+    background: #123f2a;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 700;
+    padding: 11px 14px;
+}
+
+.delivery-switch {
+    color: #16a34a;
+    cursor: pointer;
+    font-weight: 700;
+    text-align: center;
+}
+
+.delivery-notice {
+    border: 1px solid #d7eadb;
+    border-radius: 8px;
+    background: #f6fff8;
+    color: #123f2a;
+    font-weight: 700;
+    padding: 12px 14px;
+}
+
+.delivery-warning-note {
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-weight: 800;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.delivery-panel-header,
+.delivery-profile-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.delivery-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.delivery-header-actions button.secondary {
+    background: #64748b;
+}
+
+.delivery-header-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.delivery-profile-strip {
+    border: 1px solid #d7eadb;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 14px;
+}
+
+.delivery-profile-strip span {
+    color: #123f2a;
+    font-weight: 800;
+}
+
+.delivery-task-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.delivery-view-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.delivery-view-tabs button {
+    border: 1px solid #cfe3d3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #123f2a;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 10px 14px;
+}
+
+.delivery-view-tabs button.active {
+    border-color: #123f2a;
+    background: #123f2a;
+    color: #ffffff;
+}
+
+.delivered-orders-view {
+    max-width: 900px;
+}
+
+.delivery-task-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.delivery-task-column h3 {
+    color: #111827;
+}
+
+.delivery-column-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.delivery-column-heading span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.delivery-task-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #d7eadb;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 16px;
+}
+
+.delivery-task-card.delivered {
+    border-color: #bbf7d0;
+    background: #f8fff9;
+}
+
+.delivery-task-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.delivery-task-topline span {
+    border-radius: 999px;
+    background: #edf9f0;
+    color: #123f2a;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 9px;
+    white-space: nowrap;
+}
+
+.delivery-status-control {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.delivery-status-control label {
+    color: #123f2a;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.delivery-task-card .reject-button {
+    background: #991b1b;
+}
+
+.empty-delivery-state {
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 18px;
+}
+
+.delivery-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.delivery-pagination button {
+    border: 1px solid #cfe3d3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #123f2a;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 9px 12px;
+}
+
+.delivery-pagination button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.delivery-pagination span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+@media (max-width: 860px) {
+    .delivery-task-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .delivery-status-control {
+        grid-template-columns: 1fr;
+    }
+}
