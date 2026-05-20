@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-// Customer account. cartData keeps the user's cart synced between refresh/login.
+// Customer account. cartData is now a backup mirror of the separate carts collection.
 // resetOtp fields are used only during forgot-password flow.
 const userSchema = new mongoose.Schema({
 	name:{type:String,required:true},

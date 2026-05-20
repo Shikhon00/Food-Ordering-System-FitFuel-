@@ -43,7 +43,7 @@ const AdminLogin = ({ onLogin }) => {
                     <span className="admin-login-logo">F</span>
                     <div>
                         <h1>FitFuel Admin</h1>
-                        <p>Sign in to manage products, orders, and reports.</p>
+                        <p>Sign in to manage food, orders, and reports.</p>
                     </div>
                 </div>
 

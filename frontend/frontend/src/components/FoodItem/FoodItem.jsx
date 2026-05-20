@@ -5,9 +5,9 @@ import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
 import RatingModal from "../RatingModal/RatingModal";
 
-// One product card shown in the menu. It handles stock display, cart controls,
+// One food card shown in the menu. It handles stock display, cart controls,
 // macro information, and public feedback summary.
-const FoodItem = ({id, name, price, description, image, quantity, calories, protein, carbs, fat, shelfLifeDays = 180 }) => {
+const FoodItem = ({id, name, price, description, image, quantity, calories, protein, carbs, fat, shelfLifeDays = 1 }) => {
   
   const {cartItems,addToCart,removeFromCart,url}=useContext(StoreContext);
   const isOutOfStock = quantity === 0;
@@ -23,7 +23,7 @@ const FoodItem = ({id, name, price, description, image, quantity, calories, prot
   const averageRating = Number(ratingSummary.averageRating || 0);
   const isTopRated = averageRating >= 4;
 
-  // Loads average rating and review list for this product.
+  // Loads average rating and review list for this food.
   const loadFoodFeedback = async () => {
     setIsLoadingReviews(true);
     try {
@@ -116,7 +116,7 @@ const FoodItem = ({id, name, price, description, image, quantity, calories, prot
             <span>Protein: {protein}g</span>
             <span>Carbs: {carbs}g</span>
             <span>Fat: {fat}g</span>
-            <span>Shelf Life: {shelfLifeDays} days</span>
+            <span>Best Within: {shelfLifeDays} days</span>
           </div>
           <p className="food-item-stock">Stock: {quantity}</p>
         </div>

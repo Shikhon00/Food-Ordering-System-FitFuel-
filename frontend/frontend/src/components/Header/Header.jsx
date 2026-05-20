@@ -2,7 +2,7 @@ import React from "react";
 import "./Header.css";
 import heroBg from "../../assets/fitFuel.png";
 
-// Landing hero for the nutrition shop. The background image is the main brand visual.
+// Landing hero for the cooked food ordering app. The background image is the main brand visual.
 const Header = () => {
   return (
     <div
@@ -13,15 +13,15 @@ const Header = () => {
     >
       <div className="header-contents">
         <p className="header-tagline">FitFuel. Fuel your potential.</p>
-        <h2>Choose your packed fitness nutrition products</h2>
+        <h2>Order fresh cooked fitness meals</h2>
         <p>
-          Shop gym-friendly packed products with calories, protein, carbs, fat, and shelf life details.
+          Fresh meals from nearby Dhaka kitchen hubs with calories, protein, carbs, and fat details.
         </p>
-        <button>Explore Products</button>
+        <button>Explore Food</button>
         <div className="header-stat-chips">
-          <span>High Protein Packs</span>
+          <span>High Protein Meals</span>
           <span>Low Carb Options</span>
-          <span>Macro Tracking</span>
+          <span>Dhaka Kitchen Hubs</span>
         </div>
       </div>
     </div>

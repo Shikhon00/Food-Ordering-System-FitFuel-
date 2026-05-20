@@ -4,7 +4,7 @@ import { StoreContext } from '../../context/StoreContext';
 import { useNavigate } from 'react-router-dom';
 import './DeliveryPanel.css';
 
-const STATUS_OPTIONS = ["Accepted", "Picked up package", "On the way", "Near customer", "Delivered"];
+const STATUS_OPTIONS = ["Accepted", "Picked up food", "On the way", "Near customer", "Delivered"];
 const OPEN_TASKS_PAGE_SIZE = 5;
 
 // Riders can only choose statuses after their current status.
@@ -137,7 +137,7 @@ const DeliveryPanel = () => {
       <section className="delivery-panel-header">
         <div>
           <h2>Delivery Partner Panel</h2>
-          <p>Package pickup from {tasks.shopLocation || "FitFuel Packing Hub, Uttara Sector 10, Dhaka"}</p>
+          <p>Pick up cooked food from the kitchen hub shown on each order.</p>
         </div>
         <div className="delivery-header-actions">
           <button type="button" disabled={Boolean(profile?.currentOrderId)} onClick={() => updateAvailability("Free")}>Start Shift</button>
@@ -200,8 +200,9 @@ const DeliveryPanel = () => {
               </div>
               <p>Deliver to: {order.address?.area || "Dhaka"}, {order.address?.street}</p>
               <p>Phone: {order.address?.phone}</p>
-              <p>Amount: Tk {order.amount} | ETA: {order.deliveryMeta?.estimatedDeliveryTime || "45-75 min"}</p>
-              <p>Mode: {order.deliveryMeta?.deliveryMode || "Packed fitness product"}</p>
+              <p>Amount: Tk {order.amount} | ETA: {order.deliveryMeta?.estimatedDeliveryTime || "Up to 60 min"}</p>
+              <p>Mode: {order.deliveryMeta?.deliveryMode || "Cooked food"}</p>
+              <p>Kitchen: {order.deliveryMeta?.kitchenAddress || order.address?.shopAddress || "Nearest kitchen hub"}</p>
               <p>Delivery deadline: {order.deliveryMeta?.deliveryDeadline ? new Date(order.deliveryMeta.deliveryDeadline).toLocaleString() : "Not available"}</p>
               <input
                 value={locationNotes[order._id] || ""}
@@ -239,8 +240,9 @@ const DeliveryPanel = () => {
             <article key={order._id} className="delivery-task-card">
               <strong>{order.address?.firstName} {order.address?.lastName}</strong>
               <p>Deliver to: {order.address?.area || "Dhaka"}, {order.address?.street}</p>
-              <p>Items: {order.items?.length || 0} | Tk {order.amount} | ETA: {order.deliveryMeta?.estimatedDeliveryTime || "45-75 min"}</p>
-              <p>Mode: {order.deliveryMeta?.deliveryMode || "Packed fitness product"}</p>
+              <p>Items: {order.items?.length || 0} | Tk {order.amount} | ETA: {order.deliveryMeta?.estimatedDeliveryTime || "Up to 60 min"}</p>
+              <p>Mode: {order.deliveryMeta?.deliveryMode || "Cooked food"}</p>
+              <p>Kitchen: {order.deliveryMeta?.kitchenAddress || order.address?.shopAddress || "Nearest kitchen hub"}</p>
               <p>Deadline: {order.deliveryMeta?.deliveryDeadline ? new Date(order.deliveryMeta.deliveryDeadline).toLocaleString() : "Not available"}</p>
               <button type="button" onClick={() => claimOrder(order._id)}>Take Delivery</button>
             </article>

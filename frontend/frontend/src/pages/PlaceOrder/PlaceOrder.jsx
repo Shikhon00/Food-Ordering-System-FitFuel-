@@ -6,28 +6,50 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
-const BANGLADESH_DIVISIONS = [
-  "Dhaka",
-  "Chattogram",
-  "Rajshahi",
-  "Khulna",
-  "Barishal",
-  "Sylhet",
-  "Rangpur",
-  "Mymensingh",
+const DELIVERY_ZONES = [
+  {
+    zoneName: "Uttara Zone",
+    hubAddress: "FitFuel Uttara Kitchen Hub, Sector 10, Uttara, Dhaka",
+    eta: "30-45 min",
+    areas: ["Uttara", "Airport", "Khilkhet", "Nikunja", "Dakshinkhan", "Azampur", "Abdullahpur", "Turag"],
+  },
+  {
+    zoneName: "Mirpur Zone",
+    hubAddress: "FitFuel Mirpur Kitchen Hub, Mirpur 10, Dhaka",
+    eta: "30-50 min",
+    areas: ["Mirpur", "Pallabi", "Kazipara", "Shewrapara", "Kallyanpur", "Agargaon", "Shyamoli", "Gabtoli"],
+  },
+  {
+    zoneName: "Dhanmondi Zone",
+    hubAddress: "FitFuel Dhanmondi Kitchen Hub, Dhanmondi 27, Dhaka",
+    eta: "30-50 min",
+    areas: ["Dhanmondi", "Mohammadpur", "Lalmatia", "Kalabagan", "Farmgate", "Green Road", "Panthapath", "Tejgaon"],
+  },
+  {
+    zoneName: "Gulshan-Badda Zone",
+    hubAddress: "FitFuel Gulshan Kitchen Hub, Gulshan 1, Dhaka",
+    eta: "35-55 min",
+    areas: ["Gulshan", "Banani", "Baridhara", "Bashundhara", "Badda", "Rampura", "Aftabnagar", "Mohakhali"],
+  },
+  {
+    zoneName: "Motijheel-Wari Zone",
+    hubAddress: "FitFuel Motijheel Kitchen Hub, Motijheel, Dhaka",
+    eta: "40-60 min",
+    areas: ["Motijheel", "Paltan", "Wari", "Jatrabari", "Old Dhaka", "Malibagh", "Shantinagar", "Khilgaon"],
+  },
 ];
 
 // Checkout page collects delivery information and starts Stripe payment.
 const PlaceOrder = () => {
 const {getTotalCartAmount,token,food_list,cartItems,url,fetchFoodList,cancelPendingCheckout}=useContext(StoreContext)
 
-// Delivery form state. city/country/shopAddress are added when building the order payload.
+// Delivery form state. Cooked food only supports listed Dhaka zones/areas.
 const [data,setData] = useState({
   firstName:"",
   lastName:"",
   email:"",
-  division:"Dhaka",
-  area:"",
+  deliveryZone:DELIVERY_ZONES[0].zoneName,
+  area:DELIVERY_ZONES[0].areas[0],
   street:"",
   landmark:"",
   phone:""
@@ -37,6 +59,14 @@ const [data,setData] = useState({
 const onChangeHandler = (event)=>{
   const name = event.target.name;
   const value = event.target.value;
+
+  // When the zone changes, move the area to the first area in that zone.
+  if (name === "deliveryZone") {
+    const nextZone = DELIVERY_ZONES.find((zone) => zone.zoneName === value);
+    setData(data=>({...data, deliveryZone:value, area:nextZone?.areas[0] || ""}))
+    return;
+  }
+
   setData(data=>({...data,[name]:value}))
 }
 
@@ -53,13 +83,16 @@ orderItems.push(itemInfo);
       }
     })
 
-    // Backend receives address, selected items, and total amount.
+    const selectedZone = DELIVERY_ZONES.find((zone) => zone.zoneName === data.deliveryZone);
+
+    // Backend receives address, selected food items, and total amount.
     let orderData = {
       address:{
         ...data,
-        city:data.division,
+        city:"Dhaka",
+        division:"Dhaka",
         country:"Bangladesh",
-        shopAddress:"FitFuel Packing Hub, Uttara Sector 10, Dhaka"
+        shopAddress:selectedZone?.hubAddress || ""
       },
       items:orderItems,
       amount:getTotalCartAmount()+60,
@@ -109,28 +142,35 @@ window.location.replace(session_url)
     }
   },[token])
 
+  const selectedZone = DELIVERY_ZONES.find((zone) => zone.zoneName === data.deliveryZone) || DELIVERY_ZONES[0];
+
   return (
     <form onSubmit={placeOrder} className='place-order'>
       <div className="place-order-left">
         <p className="title">Delivery Information</p>
         <div className="shop-origin-box">
-          <span>Package Pickup</span>
-          <strong>FitFuel Packing Hub, Uttara Sector 10, Dhaka</strong>
+          <span>Kitchen Pickup</span>
+          <strong>{selectedZone.hubAddress}</strong>
+          <small>Estimated delivery: {selectedZone.eta}</small>
         </div>
         <div className="multi-fields">
           <input required name='firstName' onChange={onChangeHandler} value={data.firstName}  type="text" placeholder='First name' />
           <input required name='lastName' onChange={onChangeHandler} value={data.lastName}  type="text" placeholder='Last name' />
         </div>
         <input required name='email' onChange={onChangeHandler} value={data.email} type="email" placeholder='Email address' />
-        <select required name='division' onChange={onChangeHandler} value={data.division}>
-          {BANGLADESH_DIVISIONS.map((division) => (
-            <option key={division} value={division}>{division}</option>
+        <select required name='deliveryZone' onChange={onChangeHandler} value={data.deliveryZone}>
+          {DELIVERY_ZONES.map((zone) => (
+            <option key={zone.zoneName} value={zone.zoneName}>{zone.zoneName}</option>
           ))}
         </select>
         <p className="delivery-mode-note">
-          Packed nutrition products can be delivered in Dhaka and outside Dhaka.
+          Cooked food delivery is available only in listed Dhaka service areas. Choose the nearest zone, then your area.
         </p>
-        <input required name='area' onChange={onChangeHandler} value={data.area} type="text" placeholder='Area or city, e.g. Banani, Rajshahi Sadar' />
+        <select required name='area' onChange={onChangeHandler} value={data.area}>
+          {selectedZone.areas.map((area) => (
+            <option key={area} value={area}>{area}</option>
+          ))}
+        </select>
         <input required name='street' onChange={onChangeHandler} value={data.street} type="text" placeholder='Road, house, flat details' />
         <input name='landmark' onChange={onChangeHandler} value={data.landmark} type="text" placeholder='Nearby landmark (optional)' />
         <input required name='phone' onChange={onChangeHandler} value={data.phone} type="text" placeholder='Phone' />
@@ -138,7 +178,7 @@ window.location.replace(session_url)
 
       <div className="place-order-right">
         <div className="cart-total">
-          <h2>Nutrition Order Summary</h2>
+          <h2>Food Order Summary</h2>
           <div>
             <div className="cart-total-details">
               <p>Subtotal</p>

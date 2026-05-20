@@ -10,9 +10,11 @@ import {
     markPickupDelayed,
 } from "../utils/deliveryRules.js";
 
-const SHOP_LOCATION = "FitFuel Packing Hub, Uttara Sector 10, Dhaka";
-const DELIVERY_STATUS_FLOW = ["Accepted", "Picked up package", "On the way", "Near customer", "Delivered"];
-const IN_TRANSIT_DELIVERY_STATUSES = ["Picked up package", "Picked up from shop", "On the way", "Near customer"];
+const SHOP_LOCATION = "Nearest FitFuel Kitchen Hub, Dhaka";
+const DELIVERY_STATUS_FLOW = ["Accepted", "Picked up food", "On the way", "Near customer", "Delivered"];
+const IN_TRANSIT_DELIVERY_STATUSES = ["Picked up food", "Picked up package", "Picked up from shop", "On the way", "Near customer"];
+const normalizeDeliveryStatus = (status = "Accepted") =>
+    status === "Picked up package" || status === "Picked up from shop" ? "Picked up food" : status;
 
 // Delivery partner login uses JWT just like normal users.
 const createToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET);
@@ -300,18 +302,21 @@ const getDeliveryTasks = async (req, res) => {
 
         // Split tasks into active and delivered sections for the rider UI.
         const assignedOrders = refreshedPartnerOrders
-            .filter((order) => !["Delivered", "Expired", "Delivery Failed", "Pickup Delayed"].includes(order.deliveryStatus))
+            .filter((order) =>
+                !["Delivered", "Cancelled", "Expired", "Delivery Failed", "Pickup Delayed"].includes(order.deliveryStatus) &&
+                !["Delivered", "Cancelled", "Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order.status)
+            )
             .map((order) => attachDeliveryMeta(order));
         const deliveredOrders = refreshedPartnerOrders
             .filter((order) => order.deliveryStatus === "Delivered")
             .map((order) => attachDeliveryMeta(order));
 
-        // Open orders are paid orders with no assigned rider yet.
+        // Open orders are paid food orders with no assigned rider yet.
         const openOrders = await orderModel
             .find({
                 payment: true,
                 assignedDeliveryPartner: null,
-                status: { $nin: ["Delivered", "Cancelled", "Payment Cancelled", "Expired"] },
+                status: { $nin: ["Delivered", "Cancelled", "Payment Cancelled", "Refunded", "Expired"] },
             })
             .sort({ date: 1 })
             .limit(50);
@@ -322,7 +327,7 @@ const getDeliveryTasks = async (req, res) => {
                 assignedOrders,
                 deliveredOrders,
                 openOrders: openOrders.map((order) => attachDeliveryMeta(order)),
-                shopLocation: SHOP_LOCATION,
+                shopLocation: "Kitchen hub is shown on each food order",
             },
         });
     } catch (error) {
@@ -430,6 +435,13 @@ const updateDeliveryStatus = async (req, res) => {
             return res.json({ success: false, message: "Delivery task not found" });
         }
 
+        if (["Cancelled", "Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order.status)) {
+            partner.availability = "Free";
+            partner.currentOrderId = "";
+            await partner.save();
+            return res.json({ success: false, message: "This order is already closed" });
+        }
+
         const deliveryMeta = getDeliveryMeta(order);
 
         if (deliveryMeta.isPickupLate) {
@@ -442,11 +454,11 @@ const updateDeliveryStatus = async (req, res) => {
             return res.json({ success: false, message: "Delivery deadline missed. Admin review is required." });
         }
 
-        const currentStatusIndex = DELIVERY_STATUS_FLOW.indexOf(order.deliveryStatus || "Accepted");
+        const currentStatusIndex = DELIVERY_STATUS_FLOW.indexOf(normalizeDeliveryStatus(order.deliveryStatus || "Accepted"));
         const requestedStatusIndex = DELIVERY_STATUS_FLOW.indexOf(deliveryStatus);
 
         // Delivery can only move forward. This prevents a rider from changing
-        // "Near customer" back to "Picked up from shop" after progress is made.
+        // "Near customer" back to "Picked up food" after progress is made.
         if (requestedStatusIndex <= currentStatusIndex) {
             return res.json({
                 success: false,
@@ -466,7 +478,7 @@ const updateDeliveryStatus = async (req, res) => {
             partner.currentOrderId = "";
         }
 
-        const note = locationNote || partner.lastKnownLocation || SHOP_LOCATION;
+        const note = locationNote || partner.lastKnownLocation || order.address?.shopAddress || SHOP_LOCATION;
         partner.lastKnownLocation = note;
         order.deliveryTimeline = [
             ...(order.deliveryTimeline || []),

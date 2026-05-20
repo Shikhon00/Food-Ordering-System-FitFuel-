@@ -1,6 +1,6 @@
 import mongoose from "mongoose"
 
-// Product schema for the nutrition menu. Along with price/category, each item
+// Food schema for the cooked meal menu. Along with price/category, each item
 // stores stock quantity and macro values used in order history charts.
 const foodSchema =new mongoose.Schema({
     name: {type: String,required:true},
@@ -13,7 +13,7 @@ const foodSchema =new mongoose.Schema({
     protein: { type: Number, required: true, min: 0 },
     carbs: { type: Number, required: true, min: 0 },
     fat: { type: Number, required: true, min: 0 },
-    shelfLifeDays: { type: Number, default: 180 },
+    shelfLifeDays: { type: Number, default: 1 },
 })
 
 // Reuse existing model during dev hot reloads.

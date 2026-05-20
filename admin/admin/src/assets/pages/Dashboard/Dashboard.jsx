@@ -23,8 +23,9 @@ const formatTime = (value) => {
   });
 };
 
-// These closed/error statuses are hidden from the visible Order Pipeline chart.
-const HIDDEN_PIPELINE_STATUSES = new Set(['Cancelled', 'Payment Cancelled', 'Expired']);
+// Payment-cancelled/expired orders stay out of the active pipeline; customer
+// cancellations remain visible because admin needs their refund amount.
+const HIDDEN_PIPELINE_STATUSES = new Set(['Payment Cancelled', 'Refunded', 'Expired']);
 
 // Main admin dashboard: metrics, assignment queue, order pipeline, stock alerts, recent orders.
 const Dashboard = ({ url }) => {
@@ -118,6 +119,11 @@ const Dashboard = ({ url }) => {
         tone: metrics.awaitingAssignmentOrders > 0 ? 'danger' : 'good',
       },
       {
+        label: 'Cancelled',
+        value: metrics.cancelledOrders,
+        tone: metrics.cancelledOrders > 0 ? 'warning' : 'muted',
+      },
+      {
         label: 'Active delivery',
         value: metrics.activeDeliveryOrders,
         tone: 'active',
@@ -143,12 +149,12 @@ const Dashboard = ({ url }) => {
 
   const { metrics, statusBreakdown, lowStockProducts, recentOrders } = dashboardData;
 
-  // Top sales/product metrics.
+  // Top sales/food metrics.
   const metricCards = [
     { label: 'Today Sales', value: currency.format(metrics.todaySales), hint: 'Collected from paid orders', accent: 'green' },
     { label: 'Monthly Sales', value: currency.format(metrics.monthlySales), hint: 'This month revenue', accent: 'blue' },
     { label: 'Total Orders', value: metrics.totalOrders, hint: `${metrics.paidOrders} paid orders`, accent: 'orange' },
-    { label: 'Products Sold', value: metrics.totalItemsSold, hint: `${metrics.totalProducts} products in inventory`, accent: 'purple' },
+    { label: 'Food Items Sold', value: metrics.totalItemsSold, hint: `${metrics.totalProducts} foods in inventory`, accent: 'purple' },
   ];
 
   // Pipeline excludes cancelled/payment cancelled/expired to keep focus on active operations.
@@ -162,7 +168,7 @@ const Dashboard = ({ url }) => {
           <p className="dashboard-eyebrow">Live operations</p>
           <h1>Admin Command Center</h1>
           <p className="dashboard-subtitle">
-            Monitor payments, product orders, rider assignment, delivery pressure, inventory alerts, and recent customer activity.
+            Monitor payments, food orders, rider assignment, delivery pressure, inventory alerts, and recent customer activity.
           </p>
         </div>
         <div className="dashboard-actions">
@@ -261,14 +267,18 @@ const Dashboard = ({ url }) => {
               <h2>Order Pipeline</h2>
               <p>Current order status distribution</p>
             </div>
-            <span>{visibleStatusBreakdown.reduce((total, item) => total + item.count, 0)} active orders</span>
+            <span>{visibleStatusBreakdown.reduce((total, item) => total + item.count, 0)} orders</span>
+          </div>
+          <div className="pipeline-cancel-total">
+            <span>Cancelled refund amount</span>
+            <strong>{currency.format(metrics.cancelledOrdersAmount || 0)}</strong>
           </div>
           <div className="status-list">
             {visibleStatusBreakdown.map((item) => (
               <div key={item.status} className="status-row">
                 <div className="status-meta">
                   <strong>{item.status}</strong>
-                  <span>{item.count} orders</span>
+                  <span>{item.count} orders | {currency.format(item.amount || 0)}</span>
                 </div>
                 <div className="status-bar-track">
                   <div
@@ -285,7 +295,7 @@ const Dashboard = ({ url }) => {
           <div className="panel-heading">
             <div>
               <h2>Inventory Watch</h2>
-              <p>Products with 5 or fewer left</p>
+              <p>Food items with 5 or fewer left</p>
             </div>
           </div>
           {lowStockProducts.length ? (

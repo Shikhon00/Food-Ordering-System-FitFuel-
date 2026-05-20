@@ -4,7 +4,7 @@ import multer from 'multer';
 
 const foodRouter =express.Router()
 
-// multer saves uploaded product images in backend/uploads.
+// multer saves uploaded food images in backend/uploads.
 const storage = multer.diskStorage({
     destination:"uploads",
 
@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
 
 const upload =multer({storage:storage})
 
-// Product management routes used by admin, plus public product listing.
+// Food management routes used by admin, plus public food listing.
 foodRouter.post("/add",upload.single("image"),addFood)
 foodRouter.get("/list",listFood)
 foodRouter.post("/remove",removeFood)

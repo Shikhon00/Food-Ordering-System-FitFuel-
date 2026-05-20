@@ -59,16 +59,45 @@ import bag_icon from './bag_icon.png'
 import logout_icon from './logout_icon.png'
 import parcel_icon from './parcel_icon.png'
 
-const all_products_img = menu_1
-const high_protein_img = menu_2
-const low_carb_img = menu_4
-const muscle_gain_img = menu_7
-const weight_loss_img = menu_8
-const breakfast_packs_img = menu_3
-const recovery_img = menu_8
-const drink_mixes_img = menu_3
+const all_food_img = menu_1
+const balanced_img = menu_2
+const rice_meal_img = menu_2
+const protein_drinks_img = menu_3
+const high_protein_img = menu_4
 const meal_bundles_img = menu_5
 const snack_packs_img = menu_6
+const fish_meal_img = menu_7
+const recovery_img = menu_8
+const low_carb_img = menu_7
+const muscle_gain_img = menu_7
+const weight_loss_img = menu_8
+
+export const category_images = {
+    "All Food": all_food_img,
+    "Balanced": balanced_img,
+    "High Protein": high_protein_img,
+    "Muscle Gain": muscle_gain_img,
+    "Weight Loss": weight_loss_img,
+    "Low Carb": low_carb_img,
+    "Breakfast Meals": snack_packs_img,
+    "Breakfast Packs": snack_packs_img,
+    "Rice Bowls": rice_meal_img,
+    "Rice Meals": meal_bundles_img,
+    "Chicken Meals": high_protein_img,
+    "Beef Meals": muscle_gain_img,
+    "Fish Meals": fish_meal_img,
+    "Vegetarian Meals": weight_loss_img,
+    "Healthy Snacks": snack_packs_img,
+    "Snacks": snack_packs_img,
+    "Snack Packs": snack_packs_img,
+    "Recovery": recovery_img,
+    "Recovery Meals": recovery_img,
+    "Recovery Packs": recovery_img,
+    "Protein Drinks": protein_drinks_img,
+    "Drinks": protein_drinks_img,
+    "Drink Mixes": protein_drinks_img,
+    "Meal Bundles": meal_bundles_img,
+};
 
 // Small shared icon/image map used by components like Navbar, Cart, and Footer.
 export const assets = {
@@ -95,48 +124,48 @@ export const assets = {
 // Menu categories used by ExploreMenu on the home page.
 export const menu_list = [
     {
-        menu_name: "All Products",
-        menu_image: all_products_img
+        menu_name: "All Food",
+        menu_image: all_food_img
     },
     {
-        menu_name: "High Protein",
-        menu_image: high_protein_img
-    },
-    {
-        menu_name: "Muscle Gain",
-        menu_image: muscle_gain_img
-    },
-    {
-        menu_name: "Weight Loss",
-        menu_image: weight_loss_img
-    },
-    {
-        menu_name: "Low Carb",
-        menu_image: low_carb_img
-    },
-    {
-        menu_name: "Breakfast Packs",
-        menu_image: breakfast_packs_img
-    },
-    {
-        menu_name: "Snack Packs",
+        menu_name: "Breakfast Meals",
         menu_image: snack_packs_img
     },
     {
-        menu_name: "Recovery Packs",
-        menu_image: recovery_img
+        menu_name: "Rice Meals",
+        menu_image: rice_meal_img
     },
     {
-        menu_name: "Drink Mixes",
-        menu_image: drink_mixes_img
+        menu_name: "Chicken Meals",
+        menu_image: high_protein_img
+    },
+    {
+        menu_name: "Beef Meals",
+        menu_image: muscle_gain_img
+    },
+    {
+        menu_name: "Fish Meals",
+        menu_image: fish_meal_img
+    },
+    {
+        menu_name: "Vegetarian Meals",
+        menu_image: snack_packs_img
+    },
+    {
+        menu_name: "Snacks",
+        menu_image: snack_packs_img
+    },
+    {
+        menu_name: "Drinks",
+        menu_image: protein_drinks_img
     },
     {
         menu_name: "Meal Bundles",
         menu_image: meal_bundles_img
     }]
 
-// Seed/demo product list kept for local UI fallback/reference.
-// The live app mainly loads products from the backend /api/food/list endpoint.
+// Seed/demo food list kept for local UI fallback/reference.
+// The live app mainly loads foods from the backend /api/food/list endpoint.
 export const food_list = [
     {
         _id: "1",
@@ -157,7 +186,7 @@ export const food_list = [
         name: "Muscle Gain Meal Pack",
         image: food_2,
         price: 520,
-        description: "High-calorie packed nutrition product for bulking and strength training.",
+        description: "High-calorie cooked meal for bulking and strength training.",
         category: "Muscle Gain",
         calories: 650,
         protein: 35,
@@ -170,7 +199,7 @@ export const food_list = [
         name: "Low Carb Snack Box",
         image: food_3,
         price: 430,
-        description: "Low-carb packed snack bundle for weight management.",
+        description: "Low-carb cooked snack bundle for weight management.",
         category: "Low Carb",
         calories: 260,
         protein: 22,
@@ -248,7 +277,7 @@ export const food_list = [
         name: "Weight Loss Meal Pack",
         image: food_9,
         price: 450,
-        description: "Calorie-controlled packed nutrition product for weight loss goals.",
+        description: "Calorie-controlled cooked meal for weight loss goals.",
         category: "Weight Loss",
         calories: 320,
         protein: 26,

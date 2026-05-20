@@ -3,7 +3,7 @@ import './List.css'
 import axios from 'axios'
 import {toast} from "react-toastify"
 
-// Admin inventory page for viewing products, editing stock, and removing products.
+// Admin inventory page for viewing foods, editing stock, and removing foods.
 const List = ({url}) => {
 
   
@@ -11,7 +11,7 @@ const List = ({url}) => {
   const [editedQuantities,setEditedQuantities] = useState({})
 
 
-  // Loads product list and prepares editable stock values for each product.
+  // Loads food list and prepares editable stock values for each food.
   const fetchList = async()=>{
   const response = await axios.get(`${url}/api/food/list`)
   
@@ -27,7 +27,7 @@ const List = ({url}) => {
   }
   }
 
-  // Removes a product from database and refreshes the list.
+  // Removes a food item from database and refreshes the list.
   const removeFood = async(foodId) =>{
     const response = await axios.post(`${url}/api/food/remove`,{id:foodId})
     await fetchList()
@@ -47,7 +47,7 @@ const List = ({url}) => {
     }));
   };
 
-  // Saves one product's stock quantity to backend.
+  // Saves one food item's stock quantity to backend.
   const updateQuantity = async (foodId) => {
     const rawQuantity = editedQuantities[foodId];
 
@@ -75,11 +75,11 @@ const List = ({url}) => {
   
   return (
     <div className='list add flex-col'>
-      <p>Product inventory</p>
+      <p>Food inventory</p>
       <div className="list-table">
       <div className="list-table-format title">
         <b>Image</b>
-        <b>Product</b>
+        <b>Food</b>
         <b>Category</b>
         <b>Price</b>
         <b>Macros</b>
@@ -95,7 +95,7 @@ const List = ({url}) => {
           <p>{item.name}</p>
           <p>{item.category}</p>
           <p>Tk {item.price}</p>
-          <p>{item.calories} kcal | P {item.protein}g | C {item.carbs}g | F {item.fat}g | Shelf Life: {item.shelfLifeDays || 180} days</p>
+          <p>{item.calories} kcal | P {item.protein}g | C {item.carbs}g | F {item.fat}g | Best Within: {item.shelfLifeDays || 1} days</p>
           <div className="list-quantity-control">
             <input
               type="number"

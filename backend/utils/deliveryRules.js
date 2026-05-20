@@ -1,82 +1,108 @@
-const PACKED_PRODUCT_DELIVERY_WINDOW_MINUTES = 72 * 60;
-const PACKED_PICKUP_LIMIT_MINUTES = 24 * 60;
+const COOKED_FOOD_DELIVERY_WINDOW_MINUTES = 60;
+const COOKED_FOOD_PICKUP_LIMIT_MINUTES = 20;
 
-// Delivery helpers live here so order, admin, and rider controllers all follow
-// the same rules for ETA, deadlines, warnings, and failed deliveries.
-const BANGLADESH_DIVISIONS = [
-    "Dhaka",
-    "Chattogram",
-    "Rajshahi",
-    "Khulna",
-    "Barishal",
-    "Sylhet",
-    "Rangpur",
-    "Mymensingh",
+// Five kitchen hubs keep cooked food delivery realistic across most of Dhaka.
+// The checkout form uses the same zones/areas so users cannot choose unsupported places.
+const DELIVERY_ZONES = [
+    {
+        zoneName: "Uttara Zone",
+        hubName: "Uttara Kitchen Hub",
+        hubAddress: "FitFuel Uttara Kitchen Hub, Sector 10, Uttara, Dhaka",
+        eta: "30-45 min",
+        minutes: 45,
+        areas: ["Uttara", "Airport", "Khilkhet", "Nikunja", "Dakshinkhan", "Azampur", "Abdullahpur", "Turag"],
+    },
+    {
+        zoneName: "Mirpur Zone",
+        hubName: "Mirpur Kitchen Hub",
+        hubAddress: "FitFuel Mirpur Kitchen Hub, Mirpur 10, Dhaka",
+        eta: "30-50 min",
+        minutes: 50,
+        areas: ["Mirpur", "Pallabi", "Kazipara", "Shewrapara", "Kallyanpur", "Agargaon", "Shyamoli", "Gabtoli"],
+    },
+    {
+        zoneName: "Dhanmondi Zone",
+        hubName: "Dhanmondi Kitchen Hub",
+        hubAddress: "FitFuel Dhanmondi Kitchen Hub, Dhanmondi 27, Dhaka",
+        eta: "30-50 min",
+        minutes: 50,
+        areas: ["Dhanmondi", "Mohammadpur", "Lalmatia", "Kalabagan", "Farmgate", "Green Road", "Panthapath", "Tejgaon"],
+    },
+    {
+        zoneName: "Gulshan-Badda Zone",
+        hubName: "Gulshan Kitchen Hub",
+        hubAddress: "FitFuel Gulshan Kitchen Hub, Gulshan 1, Dhaka",
+        eta: "35-55 min",
+        minutes: 55,
+        areas: ["Gulshan", "Banani", "Baridhara", "Bashundhara", "Badda", "Rampura", "Aftabnagar", "Mohakhali"],
+    },
+    {
+        zoneName: "Motijheel-Wari Zone",
+        hubName: "Motijheel Kitchen Hub",
+        hubAddress: "FitFuel Motijheel Kitchen Hub, Motijheel, Dhaka",
+        eta: "40-60 min",
+        minutes: 60,
+        areas: ["Motijheel", "Paltan", "Wari", "Jatrabari", "Old Dhaka", "Malibagh", "Shantinagar", "Khilgaon"],
+    },
 ];
 
-const AREA_ETA_RULES = [
-    { keywords: ["uttara", "sector 10", "sector-10"], eta: "20-35 min", minutes: 35 },
-    { keywords: ["airport", "khilkhet", "nikunja"], eta: "30-50 min", minutes: 50 },
-    { keywords: ["banani", "gulshan", "bashundhara"], eta: "35-55 min", minutes: 55 },
-    { keywords: ["mirpur", "badda", "mohakhali"], eta: "45-70 min", minutes: 70 },
-    { keywords: ["dhanmondi", "mohammadpur", "tejgaon"], eta: "60-90 min", minutes: 90 },
-    { keywords: ["old dhaka", "jatrabari", "wari"], eta: "90-120 min", minutes: 120 },
-];
-
-// We normalize area names so "Uttara", "uttara", and " Uttara " match equally.
+// Simple text normalization lets backend match areas even if casing differs.
 const normalizeArea = (area = "") => String(area).trim().toLowerCase();
 
-// For Dhaka areas, this picks the closest ETA rule by matching common keywords.
-const getEtaForArea = (area = "") => {
+const findZoneByName = (zoneName = "") =>
+    DELIVERY_ZONES.find((zone) => normalizeArea(zone.zoneName) === normalizeArea(zoneName));
+
+const findZoneByArea = (area = "") => {
     const normalizedArea = normalizeArea(area);
-    const matchedRule = AREA_ETA_RULES.find((rule) =>
-        rule.keywords.some((keyword) => normalizedArea.includes(keyword))
+    return DELIVERY_ZONES.find((zone) =>
+        zone.areas.some((zoneArea) => normalizeArea(zoneArea) === normalizedArea)
     );
-
-    return matchedRule || { eta: "45-75 min", minutes: 75 };
 };
 
-// For orders outside Dhaka, division-level ETA is easier to explain and maintain.
-const getEtaForDivision = (division = "") => {
-    const etaByDivision = {
-        Dhaka: { eta: "Same day to 1 day", minutes: 24 * 60 },
-        Chattogram: { eta: "2-3 days", minutes: 72 * 60 },
-        Rajshahi: { eta: "2-3 days", minutes: 72 * 60 },
-        Khulna: { eta: "2-3 days", minutes: 72 * 60 },
-        Barishal: { eta: "2-3 days", minutes: 72 * 60 },
-        Sylhet: { eta: "2-3 days", minutes: 72 * 60 },
-        Rangpur: { eta: "2-3 days", minutes: 72 * 60 },
-        Mymensingh: { eta: "2-3 days", minutes: 72 * 60 },
+// Returns the supported hub/area record for an address, or null when unavailable.
+const getServiceAreaForAddress = (address = {}) => {
+    const selectedZone = findZoneByName(address.deliveryZone || address.zone || "");
+    const selectedArea = String(address.area || "").trim();
+    const zone = selectedZone || findZoneByArea(selectedArea);
+
+    if (!zone || !zone.areas.some((area) => normalizeArea(area) === normalizeArea(selectedArea))) {
+        return null;
+    }
+
+    const areaName = zone.areas.find((area) => normalizeArea(area) === normalizeArea(selectedArea));
+
+    return {
+        ...zone,
+        areaName,
     };
-
-    return etaByDivision[division] || null;
 };
 
-const isSupportedDivision = (division = "") => BANGLADESH_DIVISIONS.includes(division);
+const isSupportedDhakaArea = (address = {}) => Boolean(getServiceAreaForAddress(address));
 
-// Builds the delivery information shown to customers and admins.
-// It also tells us if a rider missed the pickup deadline.
+// Builds the delivery information shown to customers, riders, and admins.
 const getDeliveryMeta = (order, now = new Date()) => {
-    const division = order?.address?.division || "Dhaka";
-    const etaRule = getEtaForDivision(division) || getEtaForArea(order?.address?.area || order?.address?.city || "");
+    const serviceArea = getServiceAreaForAddress(order?.address || {});
     const orderDate = new Date(order?.date || now);
-    const deliveryDeadline = new Date(orderDate.getTime() + PACKED_PRODUCT_DELIVERY_WINDOW_MINUTES * 60 * 1000);
-    const pickupDeadline = new Date(orderDate.getTime() + PACKED_PICKUP_LIMIT_MINUTES * 60 * 1000);
+    const deliveryDeadline = new Date(orderDate.getTime() + COOKED_FOOD_DELIVERY_WINDOW_MINUTES * 60 * 1000);
+    const pickupDeadline = new Date(orderDate.getTime() + COOKED_FOOD_PICKUP_LIMIT_MINUTES * 60 * 1000);
+    const isClosed = ["Delivered", "Cancelled", "Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order?.status);
     const isPickupLate =
         now > pickupDeadline &&
         Boolean(order?.assignedDeliveryPartner) &&
         ["Assigned", "Accepted", "Waiting for assignment"].includes(order?.deliveryStatus || "Waiting for assignment") &&
-        !["Delivered", "Cancelled", "Payment Cancelled", "Expired", "Delivery Failed"].includes(order?.status);
+        !isClosed;
 
     return {
-        estimatedDeliveryTime: etaRule.eta,
-        estimatedDeliveryMinutes: etaRule.minutes,
+        estimatedDeliveryTime: serviceArea?.eta || "Up to 60 min",
+        estimatedDeliveryMinutes: serviceArea?.minutes || COOKED_FOOD_DELIVERY_WINDOW_MINUTES,
         deliveryDeadline,
         pickupDeadline,
-        deliveryMode: "Packed fitness product",
-        serviceArea: `${division}, Bangladesh`,
+        deliveryMode: "Cooked food",
+        serviceArea: serviceArea ? `${serviceArea.areaName}, ${serviceArea.zoneName}` : "Dhaka",
+        kitchenHub: serviceArea?.hubName || "Nearest FitFuel Kitchen Hub",
+        kitchenAddress: serviceArea?.hubAddress || order?.address?.shopAddress || "Dhaka",
         isPickupLate,
-        isExpired: false,
+        isExpired: now > deliveryDeadline && !isClosed,
     };
 };
 
@@ -133,7 +159,7 @@ const applyRiderWarning = async (partner, reason, failedDelivery = false) => {
 
 // If the rider accepts but does not pick up in time, admin needs to review it.
 const markPickupDelayed = async (order, partner = null) => {
-    const reason = "Pickup deadline missed. Admin review required before this order continues.";
+    const reason = "Food pickup deadline missed. Admin review required before this order continues.";
 
     order.status = "Needs Admin Review";
     order.deliveryStatus = "Pickup Delayed";
@@ -153,9 +179,8 @@ const markPickupDelayed = async (order, partner = null) => {
     return order;
 };
 
-// If the package is already in transit and the delivery deadline passes,
-// the order is marked as failed so admin can decide refund/remake/contact.
-const markDeliveryFailed = async (order, partner = null, note = "Delivery deadline missed. Admin must refund, remake, or contact the customer.") => {
+// If food is already in transit and the deadline passes, admin must review it.
+const markDeliveryFailed = async (order, partner = null, note = "Food delivery deadline missed. Admin must refund, remake, or contact the customer.") => {
     order.status = "Delivery Failed";
     order.deliveryStatus = "Delivery Failed";
     order.deliveryReviewRequired = true;
@@ -176,14 +201,14 @@ const markDeliveryFailed = async (order, partner = null, note = "Delivery deadli
 };
 
 export {
-    BANGLADESH_DIVISIONS,
-    PACKED_PRODUCT_DELIVERY_WINDOW_MINUTES,
-    PACKED_PICKUP_LIMIT_MINUTES,
+    COOKED_FOOD_DELIVERY_WINDOW_MINUTES,
+    COOKED_FOOD_PICKUP_LIMIT_MINUTES,
+    DELIVERY_ZONES,
     applyRiderWarning,
     attachDeliveryMeta,
     getDeliveryMeta,
-    getEtaForArea,
-    isSupportedDivision,
+    getServiceAreaForAddress,
+    isSupportedDhakaArea,
     markDeliveryFailed,
     markExpiredOrder,
     markPickupDelayed,

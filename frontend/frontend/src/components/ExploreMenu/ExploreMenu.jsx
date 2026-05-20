@@ -1,20 +1,44 @@
-import React from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import "./ExploreMenu.css";
-import { menu_list } from "../../assets/assets";
+import { category_images } from "../../assets/assets";
+import { StoreContext } from "../../context/StoreContext";
 
-// Category selector. Clicking a category filters the product list on Home page.
+// Category selector. Clicking a category filters the food list on Home page.
 const ExploreMenu = ({ category, setCategory }) => {
+  const { food_list } = useContext(StoreContext);
+
+  // Build filters from the same food categories admin sees in the inventory list.
+  const menuItems = useMemo(() => {
+    const liveCategories = [...new Set((food_list || []).map((item) => item.category).filter(Boolean))].sort();
+
+    return [
+      { menu_name: "All Food", menu_image: category_images["All Food"] },
+      ...liveCategories.map((categoryName) => ({
+        menu_name: categoryName,
+        menu_image: category_images[categoryName] || category_images["All Food"],
+      })),
+    ];
+  }, [food_list]);
+
+  // If admin removes the selected category, fall back to all food.
+  useEffect(() => {
+    const categoryExists = category === "all" || menuItems.some((item) => item.menu_name === category);
+    if (!categoryExists) {
+      setCategory("all");
+    }
+  }, [category, menuItems, setCategory]);
+
   return (
     <div className="explore-menu" id="explore-menu">
-      <h1>Choose your packed fitness nutrition products</h1>
+      <h1>Choose food by category</h1>
       <p className="explore-menu-text">
-        Shop gym-friendly packed products with calories, protein, carbs, fat, and shelf life details.
+        These filters come from the food categories in admin inventory, so the menu stays matched with your live food list.
       </p>
 
       <div className="explore-menu-list">
-        {menu_list.map((item, index) => {
+        {menuItems.map((item, index) => {
           // Active state highlights the currently selected category image.
-          const active = category === item.menu_name || (category === "all" && item.menu_name === "All Products");
+          const active = category === item.menu_name || (category === "all" && item.menu_name === "All Food");
 
           return (
             <div

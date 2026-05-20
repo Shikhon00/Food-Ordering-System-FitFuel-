@@ -74,7 +74,7 @@ const RatingModal = ({
           ×
         </button>
 
-        {/* Public product review mode. */}
+        {/* Public food review mode. */}
         {mode === "view" ? (
           <>
             <div className="rating-modal-header">
@@ -92,7 +92,7 @@ const RatingModal = ({
             {productDetails}
 
             <p className="rating-modal-note">
-              Your feedback helps other FitFuel members choose better nutrition products.
+              Your feedback helps other FitFuel members choose better cooked food.
             </p>
 
             <div className="rating-modal-review-list">
@@ -127,7 +127,7 @@ const RatingModal = ({
                 <h2>Give Feedback</h2>
               </div>
               <p className="rating-modal-subtitle">
-                Review delivered FitFuel products from this order.
+                Review delivered FitFuel food from this order.
               </p>
             </div>
 
@@ -196,7 +196,7 @@ const RatingModal = ({
                 <textarea
                   value={formData.comment}
                   onChange={(event) => onFormChange(event.target.value)}
-                  placeholder="Share taste, quality, convenience, and how this FitFuel product supported your routine."
+                  placeholder="Share taste, quality, portion, and how this FitFuel food supported your routine."
                   rows="5"
                 />
               </label>

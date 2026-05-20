@@ -2,12 +2,14 @@ import orderModel from "../models/orderModel.js";
 import userModel from '../models/userModel.js'
 import foodModel from "../models/foodModel.js";
 import deliveryPartnerModel from "../models/deliveryPartnerModel.js";
+import cartModel from "../models/cartModel.js";
+import refundModel from "../models/refundModel.js";
 import Stripe from "stripe"
 import { sendEmail } from "../config/mailer.js";
 import {
     attachDeliveryMeta,
     getDeliveryMeta,
-    isSupportedDivision,
+    getServiceAreaForAddress,
     markDeliveryFailed,
     markPickupDelayed,
 } from "../utils/deliveryRules.js";
@@ -23,9 +25,12 @@ const ORDER_STATUS_FLOW = {
     "Delivered": [],
     "Cancelled": [],
     "Payment Cancelled": [],
+    "Refunded": [],
     "Expired": [],
 };
-const IN_TRANSIT_DELIVERY_STATUSES = ["Picked up package", "Picked up from shop", "On the way", "Near customer"];
+const IN_TRANSIT_DELIVERY_STATUSES = ["Picked up food", "Picked up package", "Picked up from shop", "On the way", "Near customer"];
+const LATE_CANCEL_DELIVERY_STATUSES = ["Picked up food", "Picked up package", "Picked up from shop", "On the way", "Near customer"];
+const DELIVERY_CHARGE = 60;
 const PAYMENT_CHECKOUT_HOLD_MINUTES = 20;
 
 // Date helpers for daily/monthly dashboard totals and CSV reports.
@@ -105,22 +110,38 @@ const restoreReservedStock = async (order) => {
     order.stockRestored = true;
 };
 
-// If checkout fails, the user should not lose the products they tried to buy.
+// If checkout fails, the user should not lose the food they tried to buy.
 const restoreUserCart = async (order) => {
     if (!order?.userId) {
         return;
     }
 
     const user = await userModel.findById(order.userId);
-    const currentCart = user?.cartData || {};
+    const cart = await cartModel.findOne({ userId: order.userId });
+    const currentCart = cart?.items || user?.cartData || {};
     const restoredCart = { ...currentCart };
 
     for (const item of order.items || []) {
         restoredCart[item._id] = Number(restoredCart[item._id] || 0) + Number(item.quantity || 0);
     }
 
+    await cartModel.findOneAndUpdate(
+        { userId: order.userId },
+        { items: restoredCart },
+        { upsert: true, new: true }
+    );
     await userModel.findByIdAndUpdate(order.userId, { cartData: restoredCart });
 };
+
+const buildCancellationMessage = (isLateCancellation) =>
+    !isLateCancellation
+        ? "Order cancelled. You will get back the full money."
+        : "Order cancelled. You will get your money back without the delivery charge because of late cancellation.";
+
+const isRevenueOrder = (order) =>
+    order.payment &&
+    !["Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order.status) &&
+    order.paymentStatus !== "Refunded";
 
 // Removes unpaid temporary orders and rolls back stock/cart changes.
 const removeUnpaidCheckoutOrder = async (order, reason = "Payment failed or cancelled") => {
@@ -131,6 +152,16 @@ const removeUnpaidCheckoutOrder = async (order, reason = "Payment failed or canc
     await restoreReservedStock(order);
     await restoreUserCart(order);
     await orderModel.findByIdAndDelete(order._id);
+};
+
+// Clears the separate cart collection and the old user.cartData backup together.
+const clearUserCart = async (userId) => {
+    await cartModel.findOneAndUpdate(
+        { userId },
+        { items: {} },
+        { upsert: true, new: true }
+    );
+    await userModel.findByIdAndUpdate(userId, { cartData: {} });
 };
 
 // Keeps the database clean if a user starts Stripe checkout but never returns.
@@ -178,18 +209,27 @@ const placeOrder = async (req, res) => {
 
     try {
         const normalizedOrderItems = [];
-        const division = req.body.address?.division;
+        const serviceArea = getServiceAreaForAddress(req.body.address);
 
-        // Delivery is intentionally limited to Bangladesh divisions in this project.
-        if (req.body.address?.country && req.body.address.country !== "Bangladesh") {
-            return res.json({ success: false, message: "Delivery is available only inside Bangladesh" });
+        // Cooked food is only available in supported Dhaka areas.
+        if (!serviceArea) {
+            return res.json({
+                success: false,
+                message: "Cooked food delivery is available only in our listed Dhaka service areas.",
+            });
         }
 
-        if (!isSupportedDivision(division)) {
-            return res.json({ success: false, message: "Please select a valid Bangladesh division" });
-        }
+        const normalizedAddress = {
+            ...req.body.address,
+            country: "Bangladesh",
+            city: "Dhaka",
+            division: "Dhaka",
+            deliveryZone: serviceArea.zoneName,
+            area: serviceArea.areaName,
+            shopAddress: serviceArea.hubAddress,
+        };
 
-        // Read fresh product data from MongoDB instead of trusting the frontend payload.
+        // Read fresh food data from MongoDB instead of trusting the frontend payload.
         for (const item of req.body.items) {
             const foodItem = await foodModel.findById(item._id);
 
@@ -213,7 +253,7 @@ const placeOrder = async (req, res) => {
                 protein: Number(foodItem.protein || 0),
                 carbs: Number(foodItem.carbs || 0),
                 fat: Number(foodItem.fat || 0),
-                shelfLifeDays: Number(foodItem.shelfLifeDays || 180),
+                shelfLifeDays: Number(foodItem.shelfLifeDays || 1),
             });
         }
 
@@ -238,11 +278,12 @@ const placeOrder = async (req, res) => {
             items: normalizedOrderItems,
             amount: req.body.amount,
             nutritionTotals: calculateNutritionTotals(normalizedOrderItems),
-            address: req.body.address
+            address: normalizedAddress,
+            status: "Food Processing",
         })
         await newOrder.save();
 
-        await userModel.findByIdAndUpdate(req.body.userId, { cartData: {} });
+        await clearUserCart(req.body.userId);
 
         // Stripe needs line items in smallest currency units. Here Tk is converted
         // approximately to USD cents for the demo checkout.
@@ -263,7 +304,7 @@ const placeOrder = async (req, res) => {
                 product_data: {
                     name: "Delivery Charges"
                 },
-                unit_amount: Math.round((60 / 127) * 100)
+                unit_amount: Math.round((DELIVERY_CHARGE / 127) * 100)
             },
             quantity: 1
         })
@@ -317,7 +358,7 @@ const verifyOrder = async (req, res) => {
                 try {
                     await sendEmail({
                         to: order.address.email,
-                        subject: "Your Nutrition Order is Confirmed",
+                        subject: "Your Food Order is Confirmed",
                         html: `
                             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                                 <h2>Order Confirmation</h2>
@@ -326,6 +367,7 @@ const verifyOrder = async (req, res) => {
                                 <p><strong>Delivery To:</strong> ${order.address.firstName || ""} ${order.address.lastName || ""}</p>
                                 <p><strong>Items:</strong></p>
                                 <ul>${itemsHtml}</ul>
+                                <p><strong>Kitchen Hub:</strong> ${order.address.shopAddress || "Nearest FitFuel kitchen"}</p>
                                 <p><strong>Total:</strong> Tk ${order.amount}</p>
                             </div>
                         `,
@@ -388,7 +430,7 @@ const listOrders = async (req, res) => {
     }
 }
 
-// Admin updates product/order status, but only through allowed status transitions.
+// Admin updates food/order status, but only through allowed status transitions.
 const updateStatus = async (req, res) => {
     const { orderId, status } = req.body;
 
@@ -426,6 +468,89 @@ const updateStatus = async (req, res) => {
     }
 }
 
+// Customer can cancel a paid order until it is delivered. Refund amount depends
+// on whether the rider had already picked up the package.
+const cancelOrder = async (req, res) => {
+    const { orderId } = req.body;
+
+    try {
+        const order = await orderModel.findById(orderId);
+
+        if (!order || String(order.userId) !== String(req.body.userId)) {
+            return res.json({ success: false, message: "Order not found" });
+        }
+
+        if (!order.payment) {
+            return res.json({ success: false, message: "Only paid orders can be cancelled from order history" });
+        }
+
+        if (order.status === "Delivered" || order.deliveryStatus === "Delivered") {
+            return res.json({ success: false, message: "Delivered orders can not be cancelled" });
+        }
+
+        if (["Cancelled", "Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order.status)) {
+            return res.json({ success: false, message: "This order is already closed" });
+        }
+
+        const isLateCancellation = LATE_CANCEL_DELIVERY_STATUSES.includes(order.deliveryStatus);
+        const orderAmount = Number(order.amount || 0);
+        const refundAmount = isLateCancellation ? Math.max(0, orderAmount - DELIVERY_CHARGE) : orderAmount;
+        const refundPercentage = orderAmount ? Math.round((refundAmount / orderAmount) * 100) : 0;
+        const message = buildCancellationMessage(isLateCancellation);
+        const partnerId = order.assignedDeliveryPartner?._id;
+
+        await restoreReservedStock(order);
+
+        order.status = "Cancelled";
+        order.paymentStatus = "Cancelled";
+        order.deliveryStatus = "Cancelled";
+        order.cancellationReason = message;
+        order.cancellationRefundPercentage = refundPercentage;
+        order.cancellationRefundAmount = refundAmount;
+        order.cancelledAt = new Date();
+        order.deliveryTimeline = [
+            ...(order.deliveryTimeline || []),
+            {
+                label: "Cancelled",
+                note: `${message} Refund amount: Tk ${refundAmount}`,
+                time: new Date(),
+            },
+        ];
+
+        await order.save();
+
+        // Keep a separate refund document so refunds have their own collection/history.
+        await refundModel.findOneAndUpdate(
+            { orderId: order._id },
+            {
+                orderId: order._id,
+                userId: order.userId,
+                amount: refundAmount,
+                percentage: refundPercentage,
+                reason: message,
+                status: "Pending",
+            },
+            { upsert: true, new: true }
+        );
+
+        if (partnerId) {
+            await deliveryPartnerModel.findByIdAndUpdate(partnerId, {
+                availability: "Free",
+                currentOrderId: "",
+            });
+        }
+
+        res.json({
+            success: true,
+            message,
+            data: attachDeliveryMeta(order),
+        });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Error" });
+    }
+}
+
 // Admin assigns a free, approved delivery partner to a paid order.
 const assignDeliveryPartner = async (req, res) => {
     const { orderId, partnerId } = req.body;
@@ -446,7 +571,7 @@ const assignDeliveryPartner = async (req, res) => {
             return res.json({ success: false, message: "Only paid orders can be assigned for delivery" });
         }
 
-        if (["Delivered", "Cancelled", "Payment Cancelled", "Expired"].includes(order.status)) {
+        if (["Delivered", "Cancelled", "Payment Cancelled", "Refunded", "Expired"].includes(order.status)) {
             return res.json({ success: false, message: "This order is already closed" });
         }
 
@@ -507,7 +632,7 @@ const reportRider = async (req, res) => {
         }
 
         // Limit the text length so reports stay readable in admin screens.
-        const reportReason = String(reason || "Customer did not receive the product").trim().slice(0, 300);
+        const reportReason = String(reason || "Customer did not receive the food").trim().slice(0, 300);
         order.riderReported = true;
         order.riderReportReason = reportReason;
         order.riderReportedAt = new Date();
@@ -538,7 +663,7 @@ const reportRider = async (req, res) => {
 // Admin can send a refund notice to the customer after reviewing a delivered order.
 const sendRefundNotice = async (req, res) => {
     const { orderId } = req.body;
-    const notice = "After inquiry, you will get back your money.";
+    const notice = "Your report is under admin review. If the report is confirmed as true, you will get your money back, otherwise no refund will be issued.";
 
     try {
         const order = await orderModel.findById(orderId);
@@ -566,7 +691,75 @@ const sendRefundNotice = async (req, res) => {
 
         await order.save();
 
+        // Delivered-order report refunds start as a notice/review record.
+        await refundModel.findOneAndUpdate(
+            { orderId: order._id },
+            {
+                orderId: order._id,
+                userId: order.userId,
+                amount: Number(order.amount || 0),
+                percentage: 100,
+                reason: notice,
+                status: "Notice Sent",
+            },
+            { upsert: true, new: true }
+        );
+
         res.json({ success: true, message: "Refund notice sent to customer", data: order });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Error" });
+    }
+}
+
+// Admin confirms the cancellation refund was sent. The order stays in customer
+// history, but leaves admin cancellation queues and revenue/pipeline totals.
+const markCancellationRefundSent = async (req, res) => {
+    const { orderId } = req.body;
+
+    try {
+        const order = await orderModel.findById(orderId);
+
+        if (!order) {
+            return res.json({ success: false, message: "Order not found" });
+        }
+
+        if (order.status !== "Cancelled") {
+            return res.json({ success: false, message: "Only cancelled orders can be marked refunded" });
+        }
+
+        order.status = "Refunded";
+        order.paymentStatus = "Refunded";
+        order.refundProcessed = true;
+        order.refundProcessedAt = new Date();
+        order.refundNotice = "You got the refund.";
+        order.refundNoticeAt = new Date();
+        order.deliveryTimeline = [
+            ...(order.deliveryTimeline || []),
+            {
+                label: "Refund Sent",
+                note: `Customer refund sent. Amount: Tk ${order.cancellationRefundAmount || 0}`,
+                time: new Date(),
+            },
+        ];
+
+        await order.save();
+
+        await refundModel.findOneAndUpdate(
+            { orderId: order._id },
+            {
+                orderId: order._id,
+                userId: order.userId,
+                amount: Number(order.cancellationRefundAmount || 0),
+                percentage: Number(order.cancellationRefundPercentage || 0),
+                reason: order.cancellationReason || "Cancellation refund sent",
+                status: "Sent",
+                processedAt: order.refundProcessedAt,
+            },
+            { upsert: true, new: true }
+        );
+
+        res.json({ success: true, message: "Refund sent and order removed from cancelled list", data: order });
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: "Error" });
@@ -581,40 +774,50 @@ const getDashboardData = async (req, res) => {
         const todayStart = startOfDay(now);
         const monthStart = startOfMonth(now);
 
-        // Orders and products are independent queries, so Promise.all loads them together.
+        // Orders and foods are independent queries, so Promise.all loads them together.
         const [orders, products] = await Promise.all([
             orderModel.find({ payment: true }).sort({ date: -1 }),
             foodModel.find({}).sort({ quantity: 1 }),
         ]);
 
         const paidOrders = orders;
-        const todayPaidOrders = paidOrders.filter((order) => new Date(order.date) >= todayStart);
-        const monthPaidOrders = paidOrders.filter((order) => new Date(order.date) >= monthStart);
+        const revenueOrders = paidOrders.filter((order) => isRevenueOrder(order));
+        const todayRevenueOrders = revenueOrders.filter((order) => new Date(order.date) >= todayStart);
+        const monthRevenueOrders = revenueOrders.filter((order) => new Date(order.date) >= monthStart);
 
-        const totalSales = paidOrders.reduce((sum, order) => sum + order.amount, 0);
-        const todaySales = todayPaidOrders.reduce((sum, order) => sum + order.amount, 0);
-        const monthlySales = monthPaidOrders.reduce((sum, order) => sum + order.amount, 0);
-        const totalItemsSold = paidOrders.reduce(
+        const totalSales = revenueOrders.reduce((sum, order) => sum + order.amount, 0);
+        const todaySales = todayRevenueOrders.reduce((sum, order) => sum + order.amount, 0);
+        const monthlySales = monthRevenueOrders.reduce((sum, order) => sum + order.amount, 0);
+        const totalItemsSold = revenueOrders.reduce(
             (sum, order) => sum + order.items.reduce((itemSum, item) => itemSum + Number(item.quantity || 0), 0),
             0
         );
 
         // Status breakdown powers the Order Pipeline chart in the admin dashboard.
-        const statusBreakdown = Object.keys(ORDER_STATUS_FLOW).map((status) => ({
-            status,
-            count: orders.filter((order) => order.status === status).length,
-        }));
+        const statusBreakdown = Object.keys(ORDER_STATUS_FLOW).map((status) => {
+            const matchingOrders = orders.filter((order) => order.status === status);
+            return {
+                status,
+                count: matchingOrders.length,
+                amount: matchingOrders.reduce((sum, order) => {
+                    const value = status === "Cancelled"
+                        ? Number(order.cancellationRefundAmount || order.amount || 0)
+                        : Number(order.amount || 0);
+                    return sum + value;
+                }, 0),
+            };
+        });
         const cancelledOrders = orders.filter((order) =>
             order.status === "Cancelled" || order.status === "Payment Cancelled" || order.paymentStatus === "Cancelled"
         );
         const paymentPendingOrders = [];
         const awaitingAssignmentOrders = paidOrders.filter((order) =>
             !order.assignedDeliveryPartner &&
-            !["Delivered", "Cancelled", "Payment Cancelled", "Expired", "Delivery Failed"].includes(order.status)
+            !["Delivered", "Cancelled", "Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order.status)
         );
         const activeDeliveryOrders = paidOrders.filter((order) =>
             order.assignedDeliveryPartner &&
-            !["Delivered", "Cancelled", "Payment Cancelled", "Expired", "Delivery Failed"].includes(order.status)
+            !["Delivered", "Cancelled", "Payment Cancelled", "Refunded", "Expired", "Delivery Failed"].includes(order.status)
         );
         // This smaller shape is exactly what the Assignment Queue UI needs.
         const unassignedPaidOrders = awaitingAssignmentOrders.map((order) => ({
@@ -626,7 +829,7 @@ const getDashboardData = async (req, res) => {
             itemsCount: order.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0),
         }));
 
-        // Inventory Watch only shows the most urgent low-stock products.
+        // Inventory Watch only shows the most urgent low-stock foods.
         const lowStockProducts = products
             .filter((product) => Number(product.quantity) <= 5)
             .slice(0, 5)
@@ -654,10 +857,14 @@ const getDashboardData = async (req, res) => {
                     totalSales,
                     monthlySales,
                     todaySales,
-                    totalOrders: orders.length,
-                    paidOrders: paidOrders.length,
+                    totalOrders: revenueOrders.length,
+                    paidOrders: revenueOrders.length,
                     paymentPendingOrders: paymentPendingOrders.length,
                     cancelledOrders: cancelledOrders.length,
+                    cancelledOrdersAmount: cancelledOrders.reduce(
+                        (sum, order) => sum + Number(order.cancellationRefundAmount || order.amount || 0),
+                        0
+                    ),
                     awaitingAssignmentOrders: awaitingAssignmentOrders.length,
                     activeDeliveryOrders: activeDeliveryOrders.length,
                     totalProducts: products.length,
@@ -695,6 +902,7 @@ const downloadReport = async (req, res) => {
 
         const orders = await orderModel.find({
             payment: true,
+            status: { $nin: ["Refunded", "Payment Cancelled", "Expired", "Delivery Failed"] },
             date: { $gte: rangeStart, $lte: now },
         }).sort({ date: -1 });
 
@@ -709,4 +917,4 @@ const downloadReport = async (req, res) => {
     }
 }
 
-export { placeOrder, verifyOrder, userOrders, listOrders, updateStatus, assignDeliveryPartner, reportRider, sendRefundNotice, getDashboardData, downloadReport }
+export { placeOrder, verifyOrder, userOrders, listOrders, updateStatus, cancelOrder, assignDeliveryPartner, reportRider, sendRefundNotice, markCancellationRefundSent, getDashboardData, downloadReport }

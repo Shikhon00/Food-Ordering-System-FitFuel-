@@ -30,7 +30,7 @@ export const StoreContextProvider = (props) => {
 // Adds a product to the cart locally first, then syncs the change to the backend.
 const addToCart =async (itemId) => {
 if (!token) {
-  askUserToLogin("Please login to add products to your cart.");
+  askUserToLogin("Please login to add food to your cart.");
   return;
 }
 

@@ -11,7 +11,7 @@ const Footer = () => {
             <span className="logo-icon">⚡</span>
             <span>FitFuel</span><b>.</b>
           </div>
-          <p>Fitness-focused packed products, macro tracking, and smart nutrition for every goal.</p>
+          <p>Fresh cooked fitness meals from Dhaka kitchen hubs, with clear calories and macros.</p>
 
           <div className="footer-social-icons">
             <img src={assets.facebook_icon} alt="Facebook" />
@@ -21,17 +21,17 @@ const Footer = () => {
         </div>
 
         <div className="footer-content-center">
-          <h2>Nutrition Hub</h2>
+          <h2>Food Hub</h2>
           <ul>
             <li>Home</li>
             <li>About</li>
-            <li>Nutrition History</li>
+            <li>Order History</li>
             <li>Privacy Policy</li>
           </ul>
         </div>
 
         <div className="footer-content-center">
-          <h2>Products</h2>
+          <h2>Food</h2>
           <ul>
             <li>High Protein</li>
             <li>Bulking</li>

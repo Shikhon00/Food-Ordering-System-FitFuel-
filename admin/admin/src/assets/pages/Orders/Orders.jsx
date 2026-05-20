@@ -23,7 +23,10 @@ const fatchAllOrders = async ()=> {
     setOrders((response.data.data || []).filter((order) =>
       order.deliveryStatus !== "Delivered" &&
       order.status !== "Delivered" &&
-      order.status !== "Expired"
+      order.status !== "Expired" &&
+      order.status !== "Cancelled" &&
+      order.status !== "Payment Cancelled" &&
+      order.status !== "Refunded"
     ))
   }else{
     toast.error("Error")
@@ -103,8 +106,9 @@ const freeDeliveryPartners = deliveryPartners.filter((partner) => partner.status
   <p>{order.address.area || order.address.city}, {order.address.street}</p>
   {order.address.landmark ? <p>Landmark: {order.address.landmark}</p> : null}
   <p>{order.address.phone}</p>
-  <p>ETA: {order.deliveryMeta?.estimatedDeliveryTime || "45-75 min"}</p>
-  <p>Mode: {order.deliveryMeta?.deliveryMode || "Packed fitness product"}</p>
+  <p>ETA: {order.deliveryMeta?.estimatedDeliveryTime || "Up to 60 min"}</p>
+  <p>Mode: {order.deliveryMeta?.deliveryMode || "Cooked food"}</p>
+  <p>Kitchen: {order.deliveryMeta?.kitchenAddress || order.address.shopAddress || "Nearest kitchen hub"}</p>
   <p>Delivery deadline: {order.deliveryMeta?.deliveryDeadline ? new Date(order.deliveryMeta.deliveryDeadline).toLocaleString() : "Not available"}</p>
   {order.deliveryReviewRequired ? (
     <p className="order-review-note">{order.deliveryIssueReason || "Admin review required"}</p>
@@ -125,7 +129,7 @@ const freeDeliveryPartners = deliveryPartners.filter((partner) => partner.status
       <span>{order.deliveryStatus}</span>
       <small>{order.status}</small>
     </div>
-  ) : order.payment && !["Delivered", "Cancelled", "Payment Cancelled"].includes(order.status) ? (
+  ) : order.payment && !["Delivered", "Cancelled", "Payment Cancelled", "Refunded"].includes(order.status) ? (
     <>
       <select
         value={selectedPartners[order._id] || ""}

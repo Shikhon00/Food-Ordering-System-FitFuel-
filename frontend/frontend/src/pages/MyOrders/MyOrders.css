@@ -8,92 +8,6 @@
     font-size: 14px;
 }
 
-.nutrition-history-panel {
-    margin-top: 24px;
-    padding: 22px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #f8fff5, #f4f8ff);
-    border: 1px solid #d7e8d0;
-}
-
-.nutrition-history-copy h3 {
-    margin-bottom: 8px;
-}
-
-.nutrition-history-copy p,
-.empty-history {
-    color: #5f6b7a;
-}
-
-.nutrition-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 14px;
-    margin-top: 18px;
-}
-
-.nutrition-summary-card {
-    background: #ffffff;
-    border: 1px solid #d7eadb;
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.nutrition-summary-card span {
-    color: #6b7280;
-    font-size: 13px;
-}
-
-.nutrition-summary-card strong {
-    color: #071c14;
-    font-size: 22px;
-}
-
-.chart-toolbar {
-    margin-top: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.chart-toolbar-label span {
-    color: #123f2a;
-    font-weight: 700;
-}
-
-.chart-view-selector {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.chart-view-selector button {
-    border: 1px solid #cfe3d3;
-    background: #edf9f0;
-    color: #123f2a;
-    border-radius: 999px;
-    padding: 10px 14px;
-    cursor: pointer;
-    font-weight: 700;
-}
-
-.chart-view-selector button.active {
-    background: linear-gradient(135deg, #22c55e, #123f2a);
-    color: #ffffff;
-    border-color: transparent;
-}
-
-.nutrition-history-chart {
-    width: 100%;
-    height: 320px;
-    margin-top: 18px;
-}
-
 .my-orders .container {
     display: flex;
     flex-direction: column;
@@ -140,6 +54,28 @@
     padding: 8px 10px;
 }
 
+.my-orders-cancel-notice {
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    background: #fff1f2;
+    color: #991b1b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+    padding: 8px 10px;
+}
+
+.my-orders-refunded-notice {
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.4;
+    padding: 8px 10px;
+}
+
 .my-orders-order-macros {
     display: flex;
     flex-wrap: wrap;
@@ -177,7 +113,7 @@
 .my-orders-actions {
     display: flex;
     flex-direction: row;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 8px;
     min-width: 230px;
 }
@@ -192,6 +128,11 @@
 .my-orders-actions button:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+}
+
+.my-orders-actions .cancel-order-button {
+    background: #fee2e2;
+    color: #991b1b;
 }
 
 .pagination {
@@ -408,10 +349,6 @@
 
     .pagination {
         justify-content: center;
-    }
-
-    .nutrition-history-chart {
-        height: 280px;
     }
 
     .tracking-map,

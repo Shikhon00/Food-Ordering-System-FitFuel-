@@ -8,13 +8,13 @@ const parseNutritionValue = (value) => {
     return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : null;
 };
 
-// Shelf life has a default because old products may not send this value.
+// Cooked food should normally be eaten quickly; default is 1 day.
 const parseShelfLifeDays = (value) => {
     const parsedValue = Number(value);
-    return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : 180;
+    return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : 1;
 };
 
-// Adds a nutrition product from the admin panel, including uploaded image and macro values.
+// Adds a cooked food item from the admin panel, including uploaded image and macro values.
 
 const addFood= async (req,res)=>{
 
@@ -49,7 +49,7 @@ const addFood= async (req,res)=>{
     try{
 
         await food.save();
-        res.json({success:true,message:"Product added"})
+        res.json({success:true,message:"Food added"})
     }catch (error){
         console.log(error)
         res.json({success:false,message:"Error"})
@@ -57,7 +57,7 @@ const addFood= async (req,res)=>{
 
 }
 
-// Returns all nutrition products for frontend menu/admin list pages.
+// Returns all foods for frontend menu/admin list pages.
 const listFood = async (req,res)=>{
 
     try{
@@ -71,20 +71,20 @@ const listFood = async (req,res)=>{
     }
 }
 
-// Removes a product and also deletes its image file from the uploads folder.
+// Removes a food item and also deletes its image file from the uploads folder.
 const removeFood = async (req,res)=>{
 
      try{
 
         const foods = await foodModel.findById(req.body.id);
         if (!foods) {
-            return res.json({ success: false, message: "Product not found" });
+            return res.json({ success: false, message: "Food not found" });
         }
 
-        // Image deletion is best-effort; product deletion should still continue.
+        // Image deletion is best-effort; food deletion should still continue.
         fs.unlink(`uploads/${foods.image}`,()=>{})
         await foodModel.findByIdAndDelete(req.body.id)
-        res.json({ success: true, message: "Product removed" })
+        res.json({ success: true, message: "Food removed" })
     }catch(error){
  
         console.log(error)
@@ -92,7 +92,7 @@ const removeFood = async (req,res)=>{
     }
 }
 
-// Admin can update stock quantity without editing the full product.
+// Admin can update stock quantity without editing the full food item.
 const updateFoodQuantity = async (req,res) => {
     try {
         const quantity = Number(req.body.quantity);
@@ -108,7 +108,7 @@ const updateFoodQuantity = async (req,res) => {
         );
 
         if (!updatedFood) {
-            return res.json({ success: false, message: "Product not found" });
+            return res.json({ success: false, message: "Food not found" });
         }
 
         res.json({ success: true, message: "Quantity updated", data: updatedFood });

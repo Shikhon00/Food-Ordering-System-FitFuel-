@@ -3,12 +3,12 @@ import "./FoodDisplay.css";
 import { StoreContext } from "../../context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
 
-// Displays product cards. Category comes from ExploreMenu.
+// Displays food cards. Category comes from ExploreMenu.
 const FoodDisplay = ({ category }) => {
   const { food_list } = useContext(StoreContext);
-  // "all" and "All Products" both mean no filtering.
+  // "all" and "All Food" both mean no filtering.
   const filteredProducts = food_list.filter((item) => {
-    if (category === "all" || category === "All Products") {
+    if (category === "all" || category === "All Food") {
       return true;
     }
 
@@ -17,9 +17,9 @@ const FoodDisplay = ({ category }) => {
 
   return (
     <div className="food-display" id="food-display">
-      <h2>Packed nutrition products for your fitness routine</h2>
+      <h2>Fresh cooked food for your fitness routine</h2>
       <p className="food-display-subtitle">
-        Track calories and macros before adding products to your cart.
+        Check calories and macros before adding food to your cart.
       </p>
 
       <div className="food-display-list">

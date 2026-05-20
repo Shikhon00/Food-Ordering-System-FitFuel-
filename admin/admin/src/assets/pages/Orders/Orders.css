@@ -103,10 +103,62 @@
     padding: 9px 10px;
 }
 
+.refund-sent-button {
+    margin-top: 8px;
+    border: none;
+    border-radius: 8px;
+    background: #991b1b;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 700;
+    padding: 9px 10px;
+}
+
+.refund-sent-button:disabled {
+    background: #cbd5e1;
+    color: #475569;
+    cursor: not-allowed;
+}
+
 .refund-notice-button:disabled {
     background: #cbd5e1;
     color: #475569;
     cursor: not-allowed;
+}
+
+.completed-orders-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.completed-orders-heading p {
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.completed-orders-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.completed-orders-tabs button {
+    border: 1px solid #d7dde8;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 10px 14px;
+}
+
+.completed-orders-tabs button.active {
+    background: #123f2a;
+    border-color: #123f2a;
+    color: #ffffff;
 }
 
 .payment-paid {
@@ -128,6 +180,38 @@
 .delivered-order-item {
     border-color: #bbf7d0;
     background: #f8fff9;
+}
+
+.cancelled-order-item {
+    border-color: #fecaca;
+    background: #fff8f8;
+}
+
+.order-cancel-note {
+    color: #991b1b;
+    font-weight: 800;
+    margin-top: 6px;
+}
+
+.cancel-refund-amount {
+    color: #7f1d1d;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.cancel-refund-amount span {
+    display: inline-block;
+    margin-left: 8px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.payment-cancelled {
+    color: #b91c1c;
+    font-weight: 800;
 }
 
 .empty-admin-orders {

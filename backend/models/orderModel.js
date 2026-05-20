@@ -21,14 +21,16 @@ const orderSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     nutritionTotals: { type: nutritionSchema, default: () => ({}) },
     address: { type: Object, required: true },
-    // status is the product/order status; paymentStatus tracks Stripe payment.
-    status: { type: String, default: "Product Processing" },
+    // status is the food/order status; paymentStatus tracks Stripe payment.
+    status: { type: String, default: "Food Processing" },
     paymentStatus: { type: String, default: "Pending" },
     date: { type: Date, default: Date.now },
     payment: { type: Boolean, default: false },
     confirmationEmailSent: { type: Boolean, default: false },
     // These fields help undo or explain cancelled/failed orders.
     cancellationReason: { type: String, default: "" },
+    cancellationRefundPercentage: { type: Number, default: 0 },
+    cancellationRefundAmount: { type: Number, default: 0 },
     cancelledAt: { type: Date },
     stockRestored: { type: Boolean, default: false },
     // Delivery assignment and timeline fields power customer tracking/admin review.
@@ -44,7 +46,9 @@ const orderSchema = new mongoose.Schema({
     riderReportedAt: { type: Date },
     // Admin can send a short refund notice back to the customer.
     refundNotice: { type: String, default: "" },
-    refundNoticeAt: { type: Date }
+    refundNoticeAt: { type: Date },
+    refundProcessed: { type: Boolean, default: false },
+    refundProcessedAt: { type: Date }
 })
 
 // Reuse an existing model during development hot reloads to avoid overwrite errors.

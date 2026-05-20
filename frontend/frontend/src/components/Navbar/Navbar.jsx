@@ -30,11 +30,11 @@ return (
 
      <Link to='/' onClick={ () =>setMenu("home")} className={menu==="home"?"active":""}>Home</Link>
 
-     <a href='#explore-menu' onClick={ () =>setMenu("products")} className={menu==="products"?"active":""}>Products</a>
+     <a href='#explore-menu' onClick={ () =>setMenu("products")} className={menu==="products"?"active":""}>Food</a>
 
      <a href='#footer' onClick={ () =>setMenu("about")}
      className={menu==="about"?"active":""}>About</a>
-     <Link to='/orders' onClick={ () =>setMenu("history")} className={menu==="history"?"active":""}>Nutrition History</Link>
+     <Link to='/orders' onClick={ () =>setMenu("history")} className={menu==="history"?"active":""}>Order History</Link>
 
    </ul>
 <div className="navbar-right">
@@ -54,7 +54,7 @@ return (
 :<div className='navbar-profile'>
 <img src={assets.profile_icon} alt="" className="nav-icon"/>
 <ul className="nav-profile-dropdown">
-<li onClick={()=>Navigate('/orders')}><img src={assets.bag_icon} alt=""/><p>Nutrition History</p></li>
+<li onClick={()=>Navigate('/orders')}><img src={assets.bag_icon} alt=""/><p>Order History</p></li>
 <hr/>
 <li onClick={logout}><img src={assets.logout_icon} alt=""/><p>Logout</p></li>
 </ul>

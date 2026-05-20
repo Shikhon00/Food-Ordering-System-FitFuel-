@@ -38,6 +38,11 @@
     color: #123f2a;
 }
 
+.shop-origin-box small {
+    color: #15803d;
+    font-weight: 700;
+}
+
 .place-order-left input,
 .place-order-left select {
     margin-bottom: 15px;

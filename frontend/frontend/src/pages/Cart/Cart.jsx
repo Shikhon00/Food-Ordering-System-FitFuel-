@@ -111,7 +111,7 @@ const Cart = () => {
       </div>
       <div className="cart-bottom">
         <div className="cart-total">
-          <h2>Nutrition Cart Totals</h2>
+          <h2>Food Cart Totals</h2>
           <div>
             <div className="cart-total-details">
               <p>Subtotal</p>
@@ -129,7 +129,7 @@ const Cart = () => {
             </div>
           </div>
           <div className="cart-macro-summary">
-            <h3>Product Nutrition Totals</h3>
+            <h3>Food Nutrition Totals</h3>
             <div className="cart-macro-grid">
               <div><span>Calories</span><strong>{macroTotals.calories}</strong></div>
               <div><span>Protein</span><strong>{macroTotals.protein}g</strong></div>

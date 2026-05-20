@@ -26,7 +26,7 @@ app.use(cors())
 
 // API endpoints are grouped by feature so each router stays focused.
 app.use("/api/food",foodRouter)
-// Uploaded product images are served from /images/<filename>.
+// Uploaded food images are served from /images/<filename>.
 app.use("/images",express.static('uploads'))
 app.use("/api/user",userRouter) 
 app.use("/api/cart",cartRouter) 
